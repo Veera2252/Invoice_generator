@@ -1,0 +1,345 @@
+/* Google Fonts import */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&display=swap');
+
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: #0f172a; /* Slate 900 background for a sleek editor feel */
+}
+
+h1, h2, h3, h4, .brand-title {
+  font-family: 'Outfit', sans-serif;
+}
+
+/* Scrollbar Customization */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #1e293b;
+}
+::-webkit-scrollbar-thumb {
+  background: #475569;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}
+
+/* Custom interactive input classes for the Invoice Canvas */
+.canvas-input {
+  background: transparent;
+  border: 0;
+  border-bottom: 1.5px dashed transparent;
+  border-radius: 2px;
+  transition: all 0.15s ease-in-out;
+  color: #1e293b;
+  outline: none;
+}
+
+.canvas-input:hover {
+  border-bottom-color: rgba(249, 115, 22, 0.4); /* Accent orange */
+  background-color: rgba(249, 115, 22, 0.03);
+}
+
+.canvas-input:focus {
+  border-bottom-color: #0A3D91; /* Primary blue */
+  border-bottom-style: solid;
+  background-color: rgba(10, 61, 145, 0.05);
+}
+
+/* Number input adjustment - remove browser default arrows */
+.no-spinner::-webkit-inner-spin-button,
+.no-spinner::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.no-spinner {
+  -moz-appearance: textfield;
+}
+
+/* Page canvas sizing — compact single-page layout (B5 size) */
+.invoice-canvas {
+  width: 176mm;
+  height: 250mm;
+  box-sizing: border-box;
+  background: #ffffff;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  margin-left: auto;
+  margin-right: auto;
+  position: relative;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+/* Responsive canvas scaling — shrinks the B5 canvas to fit the mobile viewport */
+.invoice-canvas-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  width: 100%;
+}
+
+@media (max-width: 767px) {
+  .invoice-canvas-wrapper {
+    /* Use a scaled transform so the canvas fits small screens */
+    overflow-x: hidden;
+    padding-bottom: 24px;
+  }
+
+  .invoice-canvas {
+    /* Scale down the fixed-size B5 canvas to fit mobile screen width.
+       176mm ≈ 665px at 96dpi. We scale to fit within ~370px viewport => factor ~0.55 */
+    transform-origin: top center;
+    transform: scale(var(--canvas-scale, 0.55));
+    /* Account for the height collapse after scaling */
+    margin-bottom: calc(250mm * (var(--canvas-scale, 0.55) - 1));
+  }
+}
+
+@media (min-width: 480px) and (max-width: 767px) {
+  .invoice-canvas {
+    transform: scale(var(--canvas-scale, 0.68));
+    margin-bottom: calc(250mm * (var(--canvas-scale, 0.68) - 1));
+  }
+}
+
+
+/* Table styling fixes */
+th {
+  background-color: #0A3D91;
+  color: white;
+}
+
+/* Toast notification */
+.toast-notification {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background: #1e293b;
+  color: #e2e8f0;
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+  border: 1px solid #334155;
+  transform: translateY(100px);
+  opacity: 0;
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 9999;
+  pointer-events: none;
+}
+
+.toast-notification.show {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+/* Print adjustments */
+@media print {
+  @page {
+    size: B5 portrait;
+    margin: 0mm;
+  }
+  
+  html, body, main {
+    margin: 0 !important;
+    padding: 0 !important;
+    background-color: white !important;
+    background-image: none !important;
+    color: black !important;
+    font-size: 9pt !important;
+  }
+
+  /* Don’t allow extra browser-added spacing that can trigger a second page */
+  header, footer {
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Reduce any accidental letter/word spacing effects during print */
+  h1, h2, h3, h4, p {
+    letter-spacing: inherit !important;
+    word-spacing: inherit !important;
+  }
+
+  /* Hide UI elements */
+  .no-print {
+    display: none !important;
+  }
+
+  .toast-notification {
+    display: none !important;
+  }
+  
+  /* Reset document shadows, borders and size to fill print page */
+  .invoice-canvas {
+    width: 176mm !important;
+    /* Use full B5 height; avoid cutting off footer by not hiding overflow hard */
+    height: 250mm !important;
+    max-height: none !important;
+    box-sizing: border-box !important;
+    box-shadow: none !important;
+    border: none !important;
+    margin: 0 auto !important;
+    padding: 3mm !important;
+    overflow: visible !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    justify-content: flex-start !important;
+    gap: 2mm !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    transform: scale(0.85) !important; /* force fit into 1 B5 even with Fit-to-page */
+    transform-origin: top center !important;
+  }
+
+  /* Avoid internal breaks that create 2nd page */
+  .invoice-canvas * {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    orphans: 1 !important;
+    widows: 1 !important;
+  }
+
+  /* Table rows should not split */
+  table, thead, tbody, tr, td, th {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  .canvas-input {
+    border: none !important;
+    background: transparent !important;
+    padding: 0 !important;
+    color: black !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  
+  /* Specific print color overrides to ensure standard contrast */
+  .text-primary {
+    color: #0A3D91 !important;
+  }
+  
+  .bg-primary {
+    background-color: #0A3D91 !important;
+    color: white !important;
+  }
+
+  .text-accent {
+    color: #F97316 !important;
+  }
+
+  /* Table borders should print nicely */
+  table, th, td {
+    border-color: #cbd5e1 !important;
+  }
+}
+
+/* PDF rendering mode — mirrors print rules for html2pdf capture */
+body.pdf-rendering {
+
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+body.pdf-rendering .no-print,
+body.pdf-rendering .print\:hidden {
+  display: none !important;
+}
+
+body.pdf-rendering .print\:col-span-2 {
+  grid-column: span 2 / span 2 !important;
+}
+
+body.pdf-rendering .invoice-canvas {
+  width: 176mm !important;
+  height: 250mm !important;
+  max-height: none !important;
+  box-sizing: border-box !important;
+  box-shadow: none !important;
+  border: none !important;
+  margin: 0 !important;
+  padding: 3mm !important;
+  overflow: hidden !important;
+  justify-content: flex-start !important;
+  gap: 2mm !important;
+}
+
+body.pdf-rendering .canvas-input {
+  border: none !important;
+  background: transparent !important;
+}
+
+/* Sidebar should fill the full viewport height on desktop */
+@media (min-width: 768px) {
+  aside {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+  }
+}
+
+/* Watermark styles (visible for both print + PDF) */
+.invoice-watermark {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  opacity: 0.06; /* slightly increased from 0.035 for clear print/PDF rendering */
+  z-index: 0;
+  user-select: none;
+  -webkit-print-color-adjust: exact !important;
+  print-color-adjust: exact !important;
+}
+
+
+/* Stacking context to place invoice sections above the watermark background */
+.invoice-canvas > *:not(.invoice-watermark) {
+  position: relative;
+  z-index: 10;
+}
+
+/* Responsive mobile sidebar drawer styles */
+@media (max-width: 767px) {
+  aside.mobile-drawer {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    z-index: 100;
+    transform: translateX(-100%);
+    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 20px 0 25px -5px rgba(0, 0, 0, 0.4);
+  }
+  
+  aside.mobile-drawer.open {
+    transform: translateX(0);
+  }
+
+  /* Backdrop overlay */
+  .drawer-backdrop {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(15, 23, 42, 0.6); /* slate-900 with opacity */
+    backdrop-filter: blur(4px);
+    z-index: 90;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .drawer-backdrop.active {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
