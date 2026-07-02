@@ -100,6 +100,14 @@
           Download PDF
         </button>
 
+        <!-- Submit / Save Invoice Button -->
+        <button id="btn-submit-invoice" class="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white py-2.5 px-3 rounded-custom font-bold text-xs tracking-wide transition-all shadow-lg active:scale-[0.98]">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+          </svg>
+          Submit / Save Invoice
+        </button>
+
         <!-- Export Excel Button -->
         <!-- Invoice Ledger (auto-saved records) -->
         <div class="flex gap-2">
@@ -178,6 +186,18 @@
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" /></svg>
             <span class="text-[9px] font-bold">Copy</span>
           </button>
+        </div>
+      </div>
+
+      <!-- Cloud Settings -->
+      <div class="mt-4">
+        <label class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-2 flex justify-between items-center">
+          <span>Google Sheets Sync</span>
+          <span id="sync-status-indicator" class="w-2 h-2 rounded-full bg-slate-600" title="Not connected"></span>
+        </label>
+        <div class="flex flex-col gap-1.5">
+          <input type="password" id="google-sheets-url" class="bg-slate-800 border border-slate-700 text-slate-200 text-[10px] rounded p-2 focus:outline-none focus:border-indigo-500 w-full" placeholder="Paste Apps Script Web App URL here">
+          <button id="btn-save-settings" class="bg-slate-700 hover:bg-slate-600 text-slate-200 text-[10px] font-semibold rounded py-1.5 transition-colors">Save URL</button>
         </div>
       </div>
 
