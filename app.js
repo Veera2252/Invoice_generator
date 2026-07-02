@@ -69,12 +69,71 @@ function setupEventListeners() {
     closeMobileSidebar();
     downloadPDF();
   });
+  document.getElementById("btn-submit-invoice").addEventListener("click", async () => {
+    closeMobileSidebar();
+    saveToLedger();
+    
+    const url = localStorage.getItem("googleSheetsUrl");
+    if (url) {
+      const d = collectInvoiceData();
+      const payload = {
+        invoiceNo: d.invoiceNo,
+        date: d.invoiceDate,
+        dueDate: d.dueDate,
+        studentName: d.studentName,
+        enrollment: d.enrollment || "",
+        course: d.course || "",
+        subtotal: d.subtotal,
+        discount: d.discount,
+        gst: d.gstAmount,
+        grandTotal: d.grandTotal,
+        amountPaid: d.amountPaid,
+        balanceDue: d.balanceDue,
+        status: d.status,
+        paymentModes: d.activeModesStr
+      };
+
+      const btn = document.getElementById("btn-submit-invoice");
+      const originalText = btn.innerHTML;
+      btn.innerHTML = `<svg class="animate-spin h-4 w-4 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Syncing...`;
+      btn.disabled = true;
+
+      try {
+        await fetch(url, {
+          method: 'POST',
+          mode: 'no-cors',
+          body: JSON.stringify(payload)
+        });
+        showToast("Invoice Synced to Google Sheets!");
+      } catch (err) {
+        showToast("Error syncing to Google Sheets");
+        console.error(err);
+      } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+        
+        setTimeout(() => {
+          if (confirm("Invoice submitted successfully! Start a new invoice?")) {
+            resetInvoice();
+          }
+        }, 100);
+      }
+    } else {
+      showToast("Saved to Local Ledger!");
+      setTimeout(() => {
+        if (confirm("Invoice saved locally! Start a new invoice to avoid overwriting?")) {
+          resetInvoice();
+        }
+      }, 100);
+    }
+  });
   document.getElementById("btn-save-json").addEventListener("click", () => {
     closeMobileSidebar();
     saveAsJSON();
   });
   document.getElementById("btn-download-ledger").addEventListener("click", () => {
     closeMobileSidebar();
+    saveToLedger();
     exportLedgerToExcel();
   });
   document.getElementById("btn-clear-ledger").addEventListener("click", () => {
@@ -162,6 +221,34 @@ function setupEventListeners() {
       reader.readAsDataURL(file);
     }
   });
+
+  // Google Sheets Settings
+  const urlInput = document.getElementById("google-sheets-url");
+  const indicator = document.getElementById("sync-status-indicator");
+  
+  if (urlInput && indicator) {
+    const savedUrl = localStorage.getItem("googleSheetsUrl");
+    if (savedUrl) {
+      urlInput.value = savedUrl;
+      indicator.classList.replace("bg-slate-600", "bg-emerald-500");
+      indicator.title = "Connected";
+    }
+
+    document.getElementById("btn-save-settings").addEventListener("click", () => {
+      const url = urlInput.value.trim();
+      if (url) {
+        localStorage.setItem("googleSheetsUrl", url);
+        indicator.classList.replace("bg-slate-600", "bg-emerald-500");
+        indicator.title = "Connected";
+        showToast("Google Sheets URL saved!");
+      } else {
+        localStorage.removeItem("googleSheetsUrl");
+        indicator.classList.replace("bg-emerald-500", "bg-slate-600");
+        indicator.title = "Not connected";
+        showToast("Google Sheets sync disabled");
+      }
+    });
+  }
 }
 
 // Generate random invoice number: AF-2026-XXXX
@@ -269,6 +356,7 @@ function calculateTotals() {
   const gstAmount = subtotalAfterDiscount * (gstPercent / 100);
   const grandTotal = subtotalAfterDiscount + gstAmount;
   const balanceDue = grandTotal - amountPaid;
+  const balanceDueRounded = Math.round(balanceDue * 100) / 100;
 
   // DOM update
   document.getElementById("lbl-subtotal").textContent = `₹${subtotal.toFixed(2)}`;
@@ -279,15 +367,15 @@ function calculateTotals() {
   const balanceEl = document.getElementById("lbl-balance-due");
   const statusBadge = document.getElementById("payment-status-badge");
   
-  balanceEl.value = balanceDue.toFixed(2);
+  balanceEl.value = balanceDueRounded.toFixed(2);
   
   if (grandTotal === 0) {
     statusBadge.className = "px-2.5 py-0.5 text-[10px] font-bold rounded-full bg-slate-100 text-slate-500 border border-slate-200";
     statusBadge.textContent = "DRAFT";
-  } else if (balanceDue <= 0) {
+  } else if (balanceDueRounded <= 0) {
     statusBadge.className = "px-2.5 py-0.5 text-[10px] font-bold rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200";
     statusBadge.textContent = "PAID IN FULL";
-  } else if (amountPaid > 0 && balanceDue > 0) {
+  } else if (amountPaid > 0 && balanceDueRounded > 0) {
     statusBadge.className = "px-2.5 py-0.5 text-[10px] font-bold rounded-full bg-amber-50 text-amber-600 border border-amber-200";
     statusBadge.textContent = "PARTIALLY PAID";
   } else {
@@ -421,8 +509,8 @@ function collectInvoiceData() {
     subtotal,
     gstAmount,
     grandTotal,
-    balanceDue,
-    status: statusBadge.textContent
+    balanceDue: Math.round(balanceDue * 100) / 100,
+    status: statusBadge.textContent.trim()
   };
 }
 
